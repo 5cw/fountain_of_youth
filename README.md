@@ -18,7 +18,7 @@ Draws from [betterfountain by piersdeseilligny.](https://github.com/piersdeseill
 Principles for this project:
 
 - Consistent, unambiguous ruleset.
-- Close to compatible with vanilla Fountain.
+- As close to compatible with vanilla Fountain as possible.
 - Greater formatting control and customizability.
 - Greater range of standard features.
 
@@ -31,8 +31,6 @@ Goals:
   - [ ] Rust
   - [ ] C/C++
   - [ ] Java/Kotlin
-  - [ ] Windows command prompt
-  - [ ] MacOS and Linux Terminal
 - [ ] Tools for converting edge case .fountain files to .foy
 - [ ] Language Server
 - [ ] VSCode Extension (maybe implement into betterfountain)
@@ -131,13 +129,12 @@ Goals:
 Fountain of Youth reorganizes the elements. These are the kinds of elements which exist:
 
 
-- Special Pages
+- Special Pages (exclusively key: value pairs,)
   - Title Page
   - Character Page
   - Outline Page
+  - Header and Footer
 - Script Body
-  - Header: Value 
-  - Footer: Value
   - Dialogue Block
     - Character
     - Parenthetical
@@ -152,17 +149,19 @@ Fountain of Youth reorganizes the elements. These are the kinds of elements whic
   - Notes
   - Comments
 
+## Shots
+
+Any line in uppercase with a blank line before and after is a Shot. Force a Shot with `$`. A Transition is just a right justified Shot. See [Justification](#justification). (`Transition` formatting applies to any right justified Shot.)
+
+Anything matching Transition criteria is automatically right justified, but notably, `>` no longer forces uppercase. When converting from `.fountain` to `.foy`, either replace `>` with `>$` or capitalize the line.
+
 ## Block
 
-Surround any sequence of elements with `{` and `}` to modify them together
+Surround any sequence of elements with `{` and `}` to modify them together. A solitary element counts as a block on its own.
 
 ## Dialogue Blocks
 
 Any Character, Parentheses and Dialogue elements can be modified together as they automatically form blocks.
-
-## Shots
-
-Any line in uppercase with a blank line before and after is a Shot. Force a Shot with `$`. A Transition is just a right justified Shot. (`Transition` formatting applies to any right justified Shot.)
 
 ## Multi Combine
 
@@ -174,13 +173,16 @@ This can be used to have both an action and a transition on the same line, to ha
 
 ### Justification
 
-Centered Text and Transitions are genericized into `>centered<` and `>right justified` modifiers and are joined by the `<left justified` modifier. These may be applied to any other element. 
+Centered Text and Transitions are genericized so that any element may have its justification changed.
 
 Anything matching usual Transition criteria is automatically right justified, but notably, `>` no longer forces uppercase. 
+- `<left justified`
+- `>centered<` or `><centered`
 
-### Horizontal Shifting
 
-If you want to move your text a certain distance from either side, prepend a justification with
+### Horizontal and Vertical Shifting
+
+If you want to move your text a certain distance from either side, or a certain distance up and down prepend a justification with
 
 - `<<x` to shift left
 - `>>x` to shift right
@@ -188,42 +190,60 @@ If you want to move your text a certain distance from either side, prepend a jus
 - `<>x` to shift left side left and right side right
 - `<<<x` to shift both sides left
 - `>>>x` to shift both sides right
+- `^^x` to shift up/down.
 
-where `x` is a [CSS length](https://developer.mozilla.org/en-US/docs/Web/CSS/length). No units will default to `em`, which is the width of a character.
+where `x` is a [CSS length](https://developer.mozilla.org/en-US/docs/Web/CSS/length). No units will default to `em` in the horizontal case, which is the width of a character, and `lh` in the vertical case, which is the height of a line. If `x` is whitespace (including just a space) it will be interpreted as 1. No gap may lead to ambiguity, and will cause formatting to be interpreted as part of the line.
 
-If there's just one shift, it applies to the justified side.
+If shifting, justification must be specified. `>>xtext` or `>>x text` will be parsed as right justified `>xtext` or `x text`.
+
+For formatting, the parser looks for the rightmost justification string `>` or `<`.
+
+- If it's `<` at the end of the string, mark the text as potentially centered, then find a corresponding `>`. If there is none, leave the line unformatted.
+- If it's not at the end of the string, mark the text as potentially left or right justified.
+- If a justification symbol was found, 
+
+
+If there's just one horizontal shift, it applies to the justified side.
 
 - `>>2<text` means align the left side of the text 2 characters to the right from where it was originally going to be and leave right margin default.
-- `>>2>text<` means align the center of the text 2 characters to the right from where it was originally going to be and leave margins default.
+- `>>2>text<` means align the center of the text 2 characters to the right from where it was originally going to be and shift whichever margin is further away to match the other margin.
 - `>>2<text` means align the right side of the text 2 characters to the right from where it was originally going to be and leave left margin default.
 
-If there's two shifts, they apply to the left side, then the right side.
+If there's two horizontal shifts, they apply to the left side, then the right side.
 
 - `>>2<<3<text` means align the left side of the text 2 characters to the right, and the right margin 3 characters to the left.
+- `><2<text` is an alias of `>>2<<2<text`.
+- `<>2<text` is an alias of `<<2>>2<text`.
+- `>>>2<text` is an alias of `>>2>>2<text`.
+- `<<<2<text` is an alias of `<<2<<2<text`.
 
-If there's two shifts and the text is center aligned, we still align to the left then the right, but 
+If there's two horizontal shifts and the text is center aligned, we still align to the left then the right, and put the center in the middle of the two.
 
-- `
+If there's three horizontal shifts, then the first one applies to the justified side, the second to the left, the third to the right. This is only necessary for centered text.
+
+
+
+- `^^2<text` will shift 2 lines down.
+- `^^ <text` will shift 1 line down, effectively adding a carriage return.
+- `^^-3<text` will shift 3 lines up, a move which will usually overlap text. 
 
 Replace `x` with `|x|` to measure from the edge of the page and not the edge of the bounding box. This will also make `%` and units like `vh` and `vw` size relative to the entire page.
 
 If this operator is used in combination with combine `^`, the other block's margins will shift to accommodate, unless it has its own shifting specified.
   
-### Bulk Formatter
+### Bulk Styler
 
-The syntax for lyrics `~` becomes a bulk formatter,
+The syntax for lyrics `~` becomes a bulk styler,
 
  - `~` or `~*` for italics 
  - `~**` for bold
  - `~***` for bold italics
  - `~_` for underline
- - `~<` for left justified
- - `~>` for right justified
- - `~><` for centered
+
 
 Can be used with Horizontal and Vertical shifting.
 
-This will modify the whole line, element, or block which comes after it.
+This will modify the whole block which comes after it.
 
 `Lyrics` formatting applies to any bulk italicized Action or Dialogue.
 
