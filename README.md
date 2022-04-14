@@ -166,7 +166,9 @@ Any line in uppercase with a blank line before and after is a Shot. Force a Shot
 
 ## Multi Combine
 
-In FoY, 
+In FoY, the dual dialogue operator `^` is now a combine operator and can be used on any block, and if it is used on a character, parenthetical, or dialogue, it will act on the whole dialogue block.
+
+This can be used to have both an action and a transition on the same line, to have one character continue to talk past dual dialogue, to do anything 
 
 ## Modifiers
 
@@ -174,8 +176,7 @@ In FoY,
 
 Centered Text and Transitions are genericized into `>centered<` and `>right justified` modifiers and are joined by the `<left justified` modifier. These may be applied to any other element. 
 
-Anything matching Transition criteria is automatically right justified, but notably, `>` no longer forces uppercase. 
-
+Anything matching usual Transition criteria is automatically right justified, but notably, `>` no longer forces uppercase. 
 
 ### Horizontal Shifting
 
@@ -205,6 +206,8 @@ If there's two shifts and the text is center aligned, we still align to the left
 - `
 
 Replace `x` with `|x|` to measure from the edge of the page and not the edge of the bounding box. This will also make `%` and units like `vh` and `vw` size relative to the entire page.
+
+If this operator is used in combination with combine `^`, the other block's margins will shift to accommodate, unless it has its own shifting specified.
   
 ### Bulk Formatter
 
